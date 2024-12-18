@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from datetime import datetime
 from data_entry import get_amount, get_category, get_date, get_description
+import matplotlib.pyplot as plt
 
 
 class CSV:
@@ -37,7 +38,7 @@ class CSV:
         start_date = datetime.strptime(start_date, CSV.FORMAT)
         end_date = datetime.strptime(end_date, CSV.FORMAT)
 
-        mask = df["date"] >= start_date & (df["date"] <= end_date)
+        mask = (df["date"] >= start_date) & (df["date"] <= end_date)
         filtered_df = df.loc[mask]
 
         if filtered_df.empty:
@@ -61,8 +62,8 @@ class CSV:
             print(f"Total Income: ${total_income:.2f}")
             print(f"Total Expense: ${total_expense:.2f}")
             print(f"Net savings: ${(total_income - total_expense):.2f}")
-        
-        return filtered_df 
+
+        return filtered_df
 
 
 def add():
@@ -76,4 +77,54 @@ def add():
     description = get_description()
     CSV.add_entry(date, amount, category, description)
 
-CSV.get_transcations("01-01-2023", "30-07-2024")
+
+def plot_transactions(df):
+    df.set_index("date", inplace=True)
+
+    income_df = (
+        df[df["category"] == "Income"]
+        .resample("D")
+        .sum()
+        .reindex(df.index, fill_value=0)
+    )
+
+    expense_df = (
+        df[df["category"] == "Income"]
+        .resample("D")
+        .sum()
+        .reindex(df.index, fill_value=0)
+    )
+
+    plt.figure(figsize=(18, 5))
+    plt.plot(income_df.index, income_df["amount"], label = "income", color= "g")
+    plt.plot(expense_df.index, expense_df["amount"], label="Expense", color = "r")
+    plt.xlabel("Date")
+    plt.ylabel("Amount")
+    plt.title("Income and Expenese Over Time")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    
+    
+def main():
+    while True:
+        print("\n 1. Add a new transcation")
+        print("2. View transcations and a summary within a data range")
+        print("3. Exit")
+        choice = input("Enter your choice (1-3): ")
+
+        if choice == "1":
+            add()
+        elif choice == "2":
+            startdate = get_date("Enter the start date (dd-mm-yyyy): ")
+            end_date = get_date("Enter the end date (dd-mm-yyyy): ")
+            df = CSV.get_transcations(startdate, end_date)
+        elif choice == "3":
+            print("Exiting...")
+            break
+        else:
+            print("Invalid choice. Enter 1, 2 or 3.")
+
+
+if __name__ == "__main__":
+    main()
